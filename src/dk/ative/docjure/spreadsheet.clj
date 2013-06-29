@@ -85,7 +85,7 @@
   
 (defmulti cell-seq
   "Return a seq of the cells in the input which can be a sheet, a row, or a collection
-   of one of these. The seq is ordered ordered by sheet, row and column."
+   of one of these. The seq is ordered by sheet, row and column."
   cell-seq-dispatch)
 (defmethod cell-seq :row  [row] (iterator-seq (.iterator row)))
 (defmethod cell-seq :sheet [sheet] (for [row (row-seq sheet)
@@ -317,12 +317,22 @@
         sheet (->> cref (.getSheetName) (.getSheet workbook))]
     (-> sheet (.getRow row) (.getCell col))))
 
+(defn- is-whole-row-reference [#^AreaReference aref]
+  "If the reference is to whole rows, return the first row and the number of rows described by the reference. Otherwise, return nil."
+  (when-let [m (re-matches #"[^!]+!(\d+)(:(\d+))?" (.formatAsString aref))]
+    (let [start (-> 1 m read-string dec)
+          end-str (m 3)]
+      [start (if end-str (- (read-string end-str) start) 1)])))
+
 (defn select-name
   "Given a workbook and name (string or keyword) of a named range, select-name returns a seq of cells or nil if the name could not be found."
   [#^Workbook workbook n]
-  (if-let [aref (named-area-ref workbook n)]
-      (map (partial cell-from-ref workbook) (.getAllReferencedCells aref))
-    nil))
+  (when-let [aref (named-area-ref workbook n)]
+    (if-let [row-nums (is-whole-row-reference aref)]
+      (let [[first-row row-count] row-nums
+            sheet (select-sheet (-> aref .getFirstCell .getSheetName) workbook)]
+        (cell-seq (take row-count (drop first-row (row-seq sheet)))))
+      (map (partial cell-from-ref workbook) (.getAllReferencedCells aref)))))
 
 (defn add-name! [#^Workbook workbook n string-ref]
   (let [the-name (.createName workbook)]

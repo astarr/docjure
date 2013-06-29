@@ -6,7 +6,8 @@
 	   (java.util Date)))
 
 (def config {:datatypes-file "test/dk/ative/docjure/testdata/datatypes.xlsx"
-	     :formulae-file "test/dk/ative/docjure/testdata/formulae.xlsx"})
+	     :formulae-file "test/dk/ative/docjure/testdata/formulae.xlsx"
+	     :rowrange-file "test/dk/ative/docjure/testdata/row_range.xlsx"})
 (def datatypes-map {:A :text, :B :integer, :C :decimal, :D :date, :E :time, :F :date-time, :G :percentage, :H :fraction, :I :scientific})
 (def formulae-map {:A :formula, :B :expected})
 
@@ -422,3 +423,9 @@
                     (map read-cell (select-name workbook "ten"))))
              (is (nil? (select-name workbook "bill"))))))
 
+(deftest named-row-test
+  (let [file (:rowrange-file config)
+        workbook (load-workbook file)]
+    (testing "Retrieve cells from named range for entire row"
+      (is (= ["Test2" "Third" "Fourth"] (map read-cell (select-name workbook "all_of_row_2"))))
+      (is (= ["Test2" "Third" "Fourth" "Fifth" "Sixth"] (map read-cell (select-name workbook "all_of_rows_2_and_3")))))))

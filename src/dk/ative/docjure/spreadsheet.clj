@@ -302,8 +302,20 @@
      (remove-row! sheet row)))
   sheet)
 
+(defn- get-name-index [#^Workbook workbook n]
+  (if-let [m (re-matches #"([^!]+)!(.+)" (name n))]
+    (let [sheet-part (m 1)
+          sheet-name (.getSheetName (CellReference. (str sheet-part "!A1")))
+          name-name (m 2)
+          name-count (.getNumberOfNames workbook)
+          all-names (for [i (range name-count)] (.getNameAt workbook i))]
+      (first (keep-indexed #(when (and (= name-name (.getNameName %2))
+                                       (= sheet-name (.getSheetName %2))) %1) all-names)))
+    (.getNameIndex workbook (name n)))
+  )
+
 (defn- named-area-ref [#^Workbook workbook n]
-  (let [index (.getNameIndex workbook (name n))]
+  (let [index (get-name-index workbook n)]
     (if (>= index 0)
       (->> index
         (.getNameAt workbook)

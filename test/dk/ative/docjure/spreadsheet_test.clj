@@ -438,4 +438,5 @@
       (is (= "Test1" (read-cell (first (select-name workbook "'Sheet1'!foo")))))
       (is (= "Test1" (read-cell (first (select-name workbook "Sheet1!foo")))))
       (is (= "Test1" (read-cell (first (select-name workbook "foo")))))
-      (is (= "Third" (read-cell (first (select-name workbook "'Sheet2'!foo"))))))))
+      (is (= "Third" (read-cell (first (select-name workbook "'Sheet2'!foo")))))
+      (is (nil? (select-name workbook "Sheet3!foo"))))))

@@ -307,10 +307,12 @@
     (let [sheet-part (m 1)
           sheet-name (.getSheetName (CellReference. (str sheet-part "!A1")))
           name-name (m 2)
-          name-count (.getNumberOfNames workbook)
-          all-names (for [i (range name-count)] (.getNameAt workbook i))]
-      (first (keep-indexed #(when (and (= name-name (.getNameName %2))
-                                       (= sheet-name (.getSheetName %2))) %1) all-names)))
+          name-count (.getNumberOfNames workbook)]
+      (or (first (for [i (range name-count)
+                       :let [n (.getNameAt workbook i)]
+                       :when (and (= name-name (.getNameName n)) (= sheet-name (.getSheetName n)))]
+                   i))
+          -1))
     (.getNameIndex workbook (name n)))
   )
 
